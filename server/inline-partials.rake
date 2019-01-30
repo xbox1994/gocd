@@ -27,9 +27,9 @@ def erb_ruby(call)
 end
 
 def args_of_fn(fn_name, call)
-  ruby_code               = erb_ruby(call)
+  ruby_code = erb_ruby(call)
   call_matcher_with_paren = /\A\s*#{fn_name}\s*\(/m
-  arg_match               = (ruby_code =~ call_matcher_with_paren) ? ruby_code.scan(/#{call_matcher_with_paren}(.*?);?\s*\);?\s*\Z/m) : ruby_code.scan(/\A\s*#{fn_name}\s*(.*?)\s*;?\s*\Z/m)
+  arg_match = (ruby_code =~ call_matcher_with_paren) ? ruby_code.scan(/#{call_matcher_with_paren}(.*?);?\s*\);?\s*\Z/m) : ruby_code.scan(/\A\s*#{fn_name}\s*(.*?)\s*;?\s*\Z/m)
   arg_match.flatten[0]
 end
 
@@ -38,13 +38,13 @@ def render_args(call)
 end
 
 def locals_hash(file, call)
-  render_arguments  = render_args(call)
-  scope_map         = render_arguments.scan(/:locals\s*=>\s*\{\s*:scope\s*=>\s*(.*?)\s*\}[\s)]*\Z/m)
+  render_arguments = render_args(call)
+  scope_map = render_arguments.scan(/:locals\s*=>\s*\{\s*:scope\s*=>\s*(.*?)\s*\}[\s)]*\Z/m)
   locals_hash_value = scope_map.flatten[0]
 
   parser_says_there_are_no_locals = locals_hash_value.nil?
-  probably_has_locals             = render_arguments =~ /locals.*scope/
-  scope_is_not_empty              = render_arguments !~ /:locals\s*=>\s*:scope\s*=>\s*\{\s*\}/
+  probably_has_locals = render_arguments =~ /locals.*scope/
+  scope_is_not_empty = render_arguments !~ /:locals\s*=>\s*:scope\s*=>\s*\{\s*\}/
   if parser_says_there_are_no_locals && probably_has_locals && scope_is_not_empty
     raise "ERROR: Inlining partials of #{file}. Parser says there are no locals here: #{call}"
   end
@@ -59,14 +59,14 @@ end
 def inline_render_calls(buffer, file, scanned_by, depth)
   render_partial_calls = buffer.scan(scanned_by)
   render_partial_calls.each do |call|
-    ruby_code           = erb_ruby(call)
-    local_hash          = locals_hash(file, call)
-    partial_path        = ruby_code.scan(/:partial\s*=>\s*("|')(.+?)\1/m).flatten[1] #make me locals style
-    partial_path        = (partial_path =~ /\//m ? File.join(RAILS_INTERPOLATED_VIEWS, File.dirname(partial_path), '_' + File.basename(partial_path)) : File.join(File.dirname(file), '_' + File.basename(partial_path)))
+    ruby_code = erb_ruby(call)
+    local_hash = locals_hash(file, call)
+    partial_path = ruby_code.scan(/:partial\s*=>\s*("|')(.+?)\1/m).flatten[1] #make me locals style
+    partial_path = (partial_path =~ /\//m ? File.join(RAILS_INTERPOLATED_VIEWS, File.dirname(partial_path), '_' + File.basename(partial_path)) : File.join(File.dirname(file), '_' + File.basename(partial_path)))
     actual_partial_path = actual_partial_path(partial_path)
-    content             = inline_partial(actual_partial_path, depth + 1)
+    content = inline_partial(actual_partial_path, depth + 1)
     if local_hash
-      prefix  = '_'*depth
+      prefix = '_' * depth
       content = "<% #{prefix}scope = #{local_hash}; -%>" + fix_scope_calls(content, prefix)
     end
     buffer.sub!(call, block_given? ? yield(content) : content)
@@ -75,6 +75,7 @@ def inline_render_calls(buffer, file, scanned_by, depth)
 end
 
 def actual_partial_path(partial_path)
+  partial_path = partial_path.gsub('.erb', '') unless partial_path.nil?
   glob = Dir.glob(partial_path)
   if glob.empty?
     glob = Dir.glob(partial_path + '.*')
