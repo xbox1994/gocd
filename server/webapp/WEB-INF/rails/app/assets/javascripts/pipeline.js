@@ -521,6 +521,9 @@ var StageActions = Class.create({
                 on401: function(transport) {
                     alert("Not authorized to approve this stage.");
                 },
+                on500: function(transport) {
+                    alert(transport.responseText);
+                },
                 on406: function(transport) {
                     var json = transport.responseText.evalJSON();
                     if (json.error) {

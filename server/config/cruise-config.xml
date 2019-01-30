@@ -41,6 +41,32 @@
           </job>
         </jobs>
       </stage>
+      <stage name="asdf">
+        <approval type="success">
+          <authorization>
+            <user>admin</user>
+          </authorization>
+        </approval>
+        <jobs>
+          <job name="asdf">
+            <tasks>
+              <ant />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
     </pipeline>
   </pipelines>
+  <environments>
+    <environment name="test">
+      <environmentvariables>
+        <variable name="APPROVAL_URL">
+          <value>http://10.13.89.38:8080/confirm/query?confirm_type=deploy_k8s&amp;query_key=</value>
+        </variable>
+      </environmentvariables>
+      <pipelines>
+        <pipeline name="up42" />
+      </pipelines>
+    </environment>
+  </environments>
 </cruise>

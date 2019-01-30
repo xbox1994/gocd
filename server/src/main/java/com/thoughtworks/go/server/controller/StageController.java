@@ -16,17 +16,19 @@
 
 package com.thoughtworks.go.server.controller;
 
-import com.thoughtworks.go.config.StageNotFoundException;
+import com.thoughtworks.go.config.*;
 import com.thoughtworks.go.config.exceptions.RecordNotFoundException;
 import com.thoughtworks.go.server.GoUnauthorizedException;
 import com.thoughtworks.go.server.newsecurity.utils.SessionUtils;
 import com.thoughtworks.go.server.security.HeaderConstraint;
-import com.thoughtworks.go.server.service.PipelineService;
-import com.thoughtworks.go.server.service.ScheduleService;
+import com.thoughtworks.go.server.security.userdetail.GoUserPrinciple;
+import com.thoughtworks.go.server.service.*;
 import com.thoughtworks.go.server.service.result.HttpLocalizedOperationResult;
 import com.thoughtworks.go.server.util.ErrorHandler;
 import com.thoughtworks.go.server.web.ResponseCodeView;
 import com.thoughtworks.go.util.SystemEnvironment;
+import org.apache.commons.io.IOUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,8 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -55,15 +59,17 @@ public class StageController {
     private ScheduleService scheduleService;
     private HeaderConstraint headerConstraint;
     private PipelineService pipelineService;
+    private GoConfigService goConfigService;
 
     protected StageController() {
     }
 
     @Autowired
-    public StageController(ScheduleService scheduleService, SystemEnvironment systemEnvironment, PipelineService pipelineService) {
+    public StageController(ScheduleService scheduleService, SystemEnvironment systemEnvironment, PipelineService pipelineService, StageService stageService, GoConfigService goConfigService, EnvironmentConfigService environmentConfigService) {
         this.scheduleService = scheduleService;
         this.headerConstraint = new HeaderConstraint(systemEnvironment);
         this.pipelineService = pipelineService;
+        this.goConfigService = goConfigService;
     }
 
     @RequestMapping(value = "/admin/rerun", method = RequestMethod.POST)
@@ -71,6 +77,34 @@ public class StageController {
                                    @RequestParam(value = "pipelineCounter") String pipelineCounter,
                                    @RequestParam(value = "stageName") String stageName,
                                    HttpServletResponse response, HttpServletRequest request) {
+        if (!Optional.ofNullable(SessionUtils.getCurrentUser())
+                .map(GoUserPrinciple::getUsername)
+                .orElse("")
+                .equals("admin")) {
+            StageConfig stageConfig = goConfigService.stageConfigNamed(pipelineName, stageName);
+            String firstApprovalUser = Optional.ofNullable(stageConfig)
+                    .map(StageConfig::getApproval)
+                    .map(Approval::getAuthConfig)
+                    .map(AdminsConfig::getUsers)
+                    .map(u -> u.get(0))
+                    .map(AdminUser::getName)
+                    .map(CaseInsensitiveString::toString)
+                    .orElse("");
+            if (firstApprovalUser.equals("admin")) {
+                try {
+                    String approvalUrl = goConfigService.getEnvironments().get(0).getVariables().getVariable("APPROVAL_URL").getValue();
+                    String url = approvalUrl + pipelineName;
+                    JSONObject json = new JSONObject(IOUtils.toString(new URL(url), Charset.forName("UTF-8")));
+                    Integer code = (Integer) json.get("code");
+                    if (code != 200) {
+                        return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, (String) json.get("message"));
+                    }
+                } catch (Exception e) {
+                    return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No APPROVAL_URL environment");
+                }
+                return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No trigger access");
+            }
+        }
 
         if (!headerConstraint.isSatisfied(request)) {
             return ResponseCodeView.create(HttpServletResponse.SC_BAD_REQUEST, "Missing required header 'Confirm'");
