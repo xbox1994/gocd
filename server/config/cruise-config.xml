@@ -1,23 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <cruise xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cruise-config.xsd" schemaVersion="115">
   <server artifactsdir="artifacts" agentAutoRegisterKey="323040d4-f2e4-4b8a-8394-7a2d122054d1" webhookSecret="3d5cd2f5-7fe7-43c0-ba34-7e01678ba8b6" commandRepositoryLocation="default" serverId="60f5f682-5248-4ba9-bb35-72c92841bd75" tokenGenerationKey="8c3c8dc9-08bf-4cd7-ac80-cecb3e7ae86c">
-    <security>
-      <authConfigs>
-        <authConfig id="9cad79b0-4d9e-4a62-829c-eb4d9488062f" pluginId="cd.go.authentication.passwordfile">
-          <property>
-            <key>PasswordFilePath</key>
-            <value>../manual-testing/ant_hg/password.properties</value>
-          </property>
-        </authConfig>
-      </authConfigs>
-      <roles>
-        <role name="xyz" />
-      </roles>
-      <admins>
-        <user>admin</user>
-        <user>dev</user>
-      </admins>
-    </security>
     <backup emailOnSuccess="true" emailOnFailure="true" />
   </server>
   <pipelines group="first">
@@ -34,6 +17,11 @@
         <git url="test-repo" />
       </materials>
       <stage name="up42_stage">
+        <approval type="success">
+          <authorization>
+            <user>admin</user>
+          </authorization>
+        </approval>
         <jobs>
           <job name="up42_job">
             <tasks>
@@ -62,6 +50,11 @@
         <git url="git@wpsgit.kingsoft.net:galaxy/redeem-code-server.git" />
       </materials>
       <stage name="defaultStage">
+        <approval type="success">
+          <authorization>
+            <user>admin</user>
+          </authorization>
+        </approval>
         <jobs>
           <job name="defaultJob">
             <tasks>
@@ -71,13 +64,8 @@
         </jobs>
       </stage>
       <stage name="asdf">
-        <approval type="success">
-          <authorization>
-            <user>admin</user>
-          </authorization>
-        </approval>
         <jobs>
-          <job name="asdf">
+          <job name="asd">
             <tasks>
               <ant />
             </tasks>

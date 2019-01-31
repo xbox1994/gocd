@@ -86,7 +86,7 @@ public class StageController {
                     .map(StageConfig::getApproval)
                     .map(Approval::getAuthConfig)
                     .map(AdminsConfig::getUsers)
-                    .map(u -> u.get(0))
+                    .map(users -> !users.isEmpty() ? users.get(0) : null)
                     .map(AdminUser::getName)
                     .map(CaseInsensitiveString::toString)
                     .orElse("");
