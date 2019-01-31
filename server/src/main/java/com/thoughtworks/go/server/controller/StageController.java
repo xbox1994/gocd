@@ -96,13 +96,12 @@ public class StageController {
                     String url = approvalUrl + pipelineName;
                     JSONObject json = new JSONObject(IOUtils.toString(new URL(url), Charset.forName("UTF-8")));
                     Integer code = (Integer) json.get("code");
-                    if (code != 200) {
+                    if (code != 0) {
                         return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, (String) json.get("message"));
                     }
                 } catch (Exception e) {
                     return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No APPROVAL_URL environment");
                 }
-                return ResponseCodeView.create(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "No trigger access");
             }
         }
 

@@ -15,6 +15,7 @@
       </roles>
       <admins>
         <user>admin</user>
+        <user>dev</user>
       </admins>
     </security>
     <backup emailOnSuccess="true" emailOnFailure="true" />
@@ -37,6 +38,34 @@
           <job name="up42_job">
             <tasks>
               <exec command="ls" />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+      <stage name="asdf">
+        <approval type="success">
+          <authorization>
+            <user>admin</user>
+          </authorization>
+        </approval>
+        <jobs>
+          <job name="asdf">
+            <tasks>
+              <ant />
+            </tasks>
+          </job>
+        </jobs>
+      </stage>
+    </pipeline>
+    <pipeline name="test">
+      <materials>
+        <git url="git@wpsgit.kingsoft.net:galaxy/redeem-code-server.git" />
+      </materials>
+      <stage name="defaultStage">
+        <jobs>
+          <job name="defaultJob">
+            <tasks>
+              <ant />
             </tasks>
           </job>
         </jobs>
